@@ -25,6 +25,11 @@ variable "db_remote_state_key" {
   type        = string
 }
 
+variable "enable_autoscaling" {
+    description = "If set to true, enable autoscaling"
+    type = bool
+}
+
 variable "instance_type" {
   description = "The type of EC2 Instance to run (e.g. t2.micro)"
   type        = string

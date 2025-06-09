@@ -46,6 +46,7 @@ resource "aws_launch_template" "example" {
 }
 
 resource "aws_lb" "example" {
+  # ASG Auto Scaling Group
   name               = "${var.cluster_name}-asg"
   load_balancer_type = "application"
   subnets            = data.aws_subnets.default.ids
@@ -70,6 +71,7 @@ resource "aws_lb_listener" "http" {
 }
 
 resource "aws_security_group" "alb" {
+  # application Load Balancer
   name = "${var.cluster_name}-alb"
 }
 
@@ -94,7 +96,7 @@ resource "aws_security_group_rule" "allow_all_outbound" {
 }
 
 resource "aws_lb_target_group" "asg" {
-  name     = "terraform-asg-example"
+  name     = "${var.cluster_name}-asg"
   port     = var.server_port
   protocol = "HTTP"
   vpc_id   = data.aws_vpc.default.id
@@ -168,4 +170,26 @@ resource "aws_security_group_rule" "allow_http_inbound_instance" {
   to_port     = var.server_port
   protocol    = local.tcp_protocol
   cidr_blocks = local.all_ips
+}
+
+resource "aws_autoscaling_schedule" "scale_out_during_business_hours" {
+   count = var.enable_autoscaling ? 1 : 0
+
+   scheduled_action_name = "${var.cluster_name}-scale-out-during-business_hours"
+   min_size = 2
+   max_size = 10
+   desired_capacity = 10
+   recurrence = "0 9 * * *"
+   autoscaling_group_name = aws_autoscaling_group.example.name
+}
+
+resource "aws_autoscaling_schedule" "scale_in_at_night" {
+   count = var.enable_autoscaling ? 1 : 0
+
+   scheduled_action_name = "${var.cluster_name}-scale-in-at-night"
+   min_size = 2
+   max_size = 10
+   desired_capacity = 2
+   recurrence = "0 17 * * *"
+   autoscaling_group_name = aws_autoscaling_group.example.name
 }
